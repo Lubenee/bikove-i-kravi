@@ -30,7 +30,6 @@ private:
     std::string secret;
     int attempts;
     bool pause;
-    int max_attempts;
 
     DifficultySelector::Difficulty difficulty;
     Renderer render;
@@ -39,8 +38,7 @@ private:
 Game::Game()
     : game_over(false), high_score(0), 
       secret(""), attempts(0), pause(false),
-      difficulty(DifficultySelector::Difficulty::Easy),
-      max_attempts(DifficultySelector::max_attempts(difficulty))
+      difficulty(DifficultySelector::Difficulty::Easy)
 {
     high_score = fh::read_high_score();
     render.high_score(high_score);
@@ -52,7 +50,6 @@ void Game::reset_game() {
     secret          = "";
     difficulty      = DifficultySelector::select();
     secret          = get_random_n_digit_number(static_cast<int>(difficulty));
-    max_attempts    = DifficultySelector::max_attempts(difficulty);
     pause           = false;
 }
 
@@ -64,10 +61,11 @@ void Game::run() {
 }
 
 void Game::play_single_game() {
-    render.message("\nMax attempts: " + std::to_string(max_attempts));
+    int MAX_ATTEMPTS = DifficultySelector::max_attempts(difficulty);
+    render.message("\nMax attempts: " + std::to_string(MAX_ATTEMPTS));
     Timer timer;
     timer.start();
-    while (!game_over && attempts < max_attempts)
+    while (!game_over && attempts < MAX_ATTEMPTS)
     {
         std::string input = InputHandler::get_n_digit_number(static_cast<int>(difficulty));
         attempts++;
@@ -75,13 +73,13 @@ void Game::play_single_game() {
     }
     int duration = timer.elapsed_seconds();
 
-    if (attempts < max_attempts) {
+    if (attempts < MAX_ATTEMPTS) {
         if (high_score == 0 || duration < high_score) 
             fh::record_high_score(duration);
         render.win_message(attempts, duration);
     }
     else {
-        render.loss_message(max_attempts, duration, secret);
+        render.loss_message(MAX_ATTEMPTS, duration, secret);
     }
 }
 

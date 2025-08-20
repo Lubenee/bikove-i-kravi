@@ -33,6 +33,15 @@ public:
             std::cout << "Invalid input. Please try again.\n\n";
         }
     }
+
+    static int max_attempts(Difficulty diff) {
+        switch (diff) {
+            case Easy:   return 7;
+            case Medium: return 10;
+            case Hard:   return 13;
+            default:     return 8;
+        }
+    }
 };
 
 #endif // DIFFICULTY_SELECTOR_H

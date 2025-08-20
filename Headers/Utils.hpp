@@ -41,11 +41,4 @@ bool is_num_valid(std::string input, int n) {
     return true;
 }
 
-// Returns the game duration in seconds
-int get_game_duration(std::chrono::time_point<std::chrono::steady_clock> start,
-                      std::chrono::time_point<std::chrono::steady_clock> end) {
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-    return static_cast<int>(duration.count());
-}
-
 #endif // UTILS_H

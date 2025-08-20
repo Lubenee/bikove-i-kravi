@@ -6,11 +6,11 @@
 #include "Termcolor/Termcolor.hpp"
 #include "RandomNumber.hpp"
 #include "Difficulty.hpp"
+#include "Timer.hpp"
 #include "InputHandler.hpp"
+#include "Renderer.hpp"
 
 using namespace std::chrono;
-
-#define MAX_ATTEMPTS 8
 
 class Game
 {
@@ -21,7 +21,7 @@ public:
     ~Game() = default;
 private:
     void print_cows_and_bulls(std::string input);
-    void play_again();
+    void play_single_game();
     void reset_game();
 
 private:
@@ -30,85 +30,69 @@ private:
     std::string secret;
     int attempts;
     bool pause;
+    int max_attempts;
 
     DifficultySelector::Difficulty difficulty;
+    Renderer render;
 };
 
 Game::Game()
     : game_over(false), high_score(0), 
       secret(""), attempts(0), pause(false),
-      difficulty(DifficultySelector::Difficulty::Easy)
+      difficulty(DifficultySelector::Difficulty::Easy),
+      max_attempts(DifficultySelector::max_attempts(difficulty))
 {
-    reset_game();
     high_score = fh::read_high_score();
-    if (high_score > 0) 
-        std::cout << termcolor::reset << "Current high score: " << high_score << " seconds." << "\n\n";
+    render.high_score(high_score);
 }
 
 void Game::reset_game() {
-    try {
-        game_over = false;
-        attempts = 0;
-        secret = "";
-        difficulty = DifficultySelector::select();
-        secret = get_random_n_digit_number(static_cast<int>(difficulty));
-        pause = false;
-    }
-    catch (const std::exception& e) {
-        std::cout << "Internal error: " << e.what() << std::endl;
-        throw e;
-    }
+    game_over       = false;
+    attempts        = 0;
+    secret          = "";
+    difficulty      = DifficultySelector::select();
+    secret          = get_random_n_digit_number(static_cast<int>(difficulty));
+    max_attempts    = DifficultySelector::max_attempts(difficulty);
+    pause           = false;
 }
 
 void Game::run() {
-    auto start = std::chrono::steady_clock::now();
-    while (!game_over && attempts < MAX_ATTEMPTS)
+    do {
+        reset_game();
+        play_single_game();
+    } while (InputHandler::ask_yes_no("Do you want to play again"));
+}
+
+void Game::play_single_game() {
+    render.message("\nMax attempts: " + std::to_string(max_attempts));
+    Timer timer;
+    timer.start();
+    while (!game_over && attempts < max_attempts)
     {
         std::string input = InputHandler::get_n_digit_number(static_cast<int>(difficulty));
         attempts++;
         print_cows_and_bulls(input);
     }
-    auto end = std::chrono::steady_clock::now();
-    int duration = get_game_duration(start, end);
+    int duration = timer.elapsed_seconds();
 
-    if (attempts < MAX_ATTEMPTS) {
+    if (attempts < max_attempts) {
         if (high_score == 0 || duration < high_score) 
             fh::record_high_score(duration);
-
-        std::cout << termcolor::bright_blue << "You won! It took you " 
-        << attempts << " attempts and " << duration << " seconds. \n\n";
+        render.win_message(attempts, duration);
     }
     else {
-        std::cout << termcolor::magenta << "You lost! It took you more than " << MAX_ATTEMPTS - 1 << " attempts. Elapsed time: " << duration << " seconds.\n";
-        std::cout << "Your number was: " << secret << ".\n\n";
+        render.loss_message(max_attempts, duration, secret);
     }
-
-    play_again();
 }
 
 void Game::print_cows_and_bulls(std::string input) {
     int bulls = 0, cows = 0;
-    for (int i = 0; i < this->secret.size(); ++i) {
-        if (input[i] == secret[i]) {
-            bulls++;
-        }
-        else if (includes(secret, input[i])){
-            cows++;
-        }
+    for (int i = 0; i < secret.size(); ++i) {
+        if (input[i] == secret[i]) bulls++;
+        else if (includes(secret, input[i])) cows++;
     }
-    std::cout << termcolor::red << "BULLS: " << bulls << ", ";
-    std::cout << termcolor::green << " COWS: " << cows << ".\n" << termcolor::reset;
-    if (bulls == this->difficulty) {
-        this->game_over = true;
-    } 
-}
-
-void Game::play_again() {
-    if (InputHandler::ask_yes_no("Do you want to play again")) {
-        std::cout << std::endl;
-        reset_game();
-        run();
-    }
+    render.bulls_and_cows(bulls, cows);
+    if (bulls == difficulty) game_over = true;
 }
 
 #endif // GAME_H

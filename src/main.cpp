@@ -6,6 +6,7 @@ int main() {
         game.run();
     }
     catch (...) {
+        std::cout << "Internal error." << std::flush;
         return 1;
     }
     return 0;

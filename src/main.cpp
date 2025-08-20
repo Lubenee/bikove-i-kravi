@@ -1,8 +1,12 @@
 #include "Game.hpp"
 
 int main() {
-
-    Game game;
-    game.run();
+    try {
+        Game game;
+        game.run();
+    }
+    catch (...) {
+        return 1;
+    }
     return 0;
 }

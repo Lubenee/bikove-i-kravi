@@ -1,6 +1,8 @@
 #if !defined(FILE_HANDLER_H)
 #define FILE_HANDLER_H
 
+#include "Termcolor/Termcolor.hpp"  
+
 #include <fstream>
 #include <iostream>
 
@@ -13,10 +15,10 @@ namespace fh
         if (!ofs.is_open())
         {
             ofs.close();
-            std::cout << "Score file didn't load properly.\n\n";
+            std::cout << termcolor::reset << "Score file didn't load properly.\n\n";
             return;
         }
-        std::cout << "Recording high score...\n\n";
+        std::cout << termcolor::reset << "Recording high score...\n\n";
         ofs.write(reinterpret_cast<const char *>(&high_score), sizeof(int));
         if (ofs.good())
         {
@@ -24,7 +26,7 @@ namespace fh
         }
         else
         {
-            std::cout << "There was an error recording the high score :(, sorry.\n\n";
+            std::cout << termcolor::reset << "There was an error recording the high score :(, sorry.\n\n";
             ofs.clear();
             ofs.close();
         }
@@ -35,7 +37,7 @@ namespace fh
         std::ifstream ifs("score.dat", std::ios::binary | std::ios::in);
         if (!ifs.is_open())
         {
-            std::cout << "Scores file wasn't found :(\n";
+            std::cout << termcolor::reset << "Scores file wasn't found :(\n";
             return 0;
         }
 
@@ -44,7 +46,7 @@ namespace fh
 
         if (!ifs.good())
         {
-            std::cout << "There was an error reading your high score :(\n\n";
+            std::cout << termcolor::reset << "There was an error reading your high score :(\n\n";
             ifs.clear();
         }
         ifs.close();
